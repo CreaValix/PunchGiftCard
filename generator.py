@@ -1,3 +1,9 @@
+#!/usr/bin/python3
+
+'''
+Generate a punch card SVG image from a given text.
+'''
+
 from math import tan, pi
 from base64 import b64encode
 
@@ -7,7 +13,7 @@ ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 ET.register_namespace("svg", "http://www.w3.org/2000/svg")
 ET.register_namespace("", "http://www.w3.org/2000/svg")
 
-MESSAGE='&-0123456789ABCDEFGHIJKLMNOPQR/STUVWXYZ  :#@\'="¢.<(+|!$*);¬\\,%_>?'
+MESSAGE = '&-0123456789ABCDEFGHIJKLMNOPQR/STUVWXYZ  :#@\'="¢.<(+|!$*);¬\\,%_>?'
 
 PIXEL_PER_INCH = 96
 PAGE_HEIGHT = (3 + 1/4) * PIXEL_PER_INCH
@@ -88,10 +94,14 @@ IBM_029 = {
     '=': 0x140,
     '"': 0x180,
 }
-STYLE='text { font-family: Monospace; font-size: 12; fill: black; stroke: none; stroke-width: 0.6; } ' \
-      'rect { fill:white; stroke: black; stroke-width: 0.6; }'
+STYLE = 'text { font-family: Monospace; font-size: 12; fill: black; ' \
+        'stroke: none; stroke-width: 0.6; } ' \
+        'rect { fill:white; stroke: black; stroke-width: 0.6; }'
 
-def generate():
+def generate() -> None:
+    '''
+    Generate a punch card SVG image.
+    '''
     svg = ET.Element("svg")
     svg.set("xmlns", "http://www.w3.org/2000/svg")
     svg.set("xmlns:svg", "http://www.w3.org/2000/svg")
@@ -115,11 +125,14 @@ def generate():
     elem.set("d", \
              f"M {CORNER_WIDTH} 0 " \
              f"L {PAGE_WIDTH-CURVE_DIAMETER} 0 " \
-             f"C {PAGE_WIDTH-CURVE_DIAMETER/2} 0 {PAGE_WIDTH} {CURVE_DIAMETER/2} {PAGE_WIDTH} {CURVE_DIAMETER} " \
+             f"C {PAGE_WIDTH-CURVE_DIAMETER/2} 0 {PAGE_WIDTH} {CURVE_DIAMETER/2} " \
+             f"{PAGE_WIDTH} {CURVE_DIAMETER} " \
              f"L {PAGE_WIDTH} {PAGE_HEIGHT-CURVE_DIAMETER} " \
-             f"C {PAGE_WIDTH} {PAGE_HEIGHT-CURVE_DIAMETER/2} {PAGE_WIDTH-CURVE_DIAMETER/2} {PAGE_HEIGHT} {PAGE_WIDTH-CURVE_DIAMETER} {PAGE_HEIGHT} " \
+             f"C {PAGE_WIDTH} {PAGE_HEIGHT-CURVE_DIAMETER/2} {PAGE_WIDTH-CURVE_DIAMETER/2} "
+             f"{PAGE_HEIGHT} {PAGE_WIDTH-CURVE_DIAMETER} {PAGE_HEIGHT} " \
              f"L {CURVE_DIAMETER} {PAGE_HEIGHT} " \
-             f"C {CURVE_DIAMETER/2} {PAGE_HEIGHT} 0 {PAGE_HEIGHT-CURVE_DIAMETER/2} 0 {PAGE_HEIGHT-CURVE_DIAMETER} " \
+             f"C {CURVE_DIAMETER/2} {PAGE_HEIGHT} 0 {PAGE_HEIGHT-CURVE_DIAMETER/2} 0 "
+             f"{PAGE_HEIGHT-CURVE_DIAMETER} " \
              f"L 0 {CORNER_HEIGHT} " \
              "Z")
 
@@ -147,16 +160,17 @@ def generate():
     for i in range(80):
         x = PAGE_WIDTH - MARGIN_RIGHT - (79 - i) * SPACE_X
         try:
-            bits = IBM_029[MESSAGE[i]]
+            char = MESSAGE[i]
+            bits = IBM_029[char]
         except IndexError:
             bits = 0x000
         except KeyError:
-            print(f"WARNING: Replaced unsupported character {MESSAGE[i]} (0x{ord(MESSAGE[i]):02x}) with space.")
+            print(f"WARNING: Replaced unknown char {char} (0x{ord(char):02x}) with space.")
             bits = 0x000
 
         for j in range(10):
             y = (j + 3) * SPACE_Y
-            if (bits & 0x001):
+            if bits & 0x001:
                 elem = ET.SubElement(group, "rect")
                 elem.set("x", f"{x - RECT_WIDTH / 2:.4f}")
                 elem.set("y", f"{y - RECT_HEIGHT / 2:.4f}")
@@ -170,7 +184,7 @@ def generate():
                 elem.text = str(j)
             bits >>= 1
         for j in range(2):
-            if (bits & 0x001):
+            if bits & 0x001:
                 y = (2 - j) * SPACE_Y
                 elem = ET.SubElement(group, "rect")
                 elem.set("x", f"{x - RECT_WIDTH / 2:.4f}")
